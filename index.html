@@ -4,13 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>LTD Grove Street – Registre Fertilisants</title>
-
+ 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-
+ 
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet"/>
-
+ 
   <style>
     :root {
       --bg:       #0d1117;
@@ -25,9 +25,9 @@
       --muted:    #7d8590;
       --radius:   12px;
     }
-
+ 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
+ 
     body {
       background: var(--bg);
       color: var(--text);
@@ -35,7 +35,7 @@
       min-height: 100vh;
       padding: 24px 16px 60px;
     }
-
+ 
     /* ─── HEADER ─── */
     header {
       display: flex;
@@ -59,7 +59,7 @@
     }
     .logo-text h1 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px; }
     .logo-text p  { font-size: 0.75rem; color: var(--muted); font-family: 'Space Mono', monospace; }
-
+ 
     #clock {
       font-family: 'Space Mono', monospace;
       font-size: 1rem;
@@ -69,7 +69,7 @@
       border-radius: 8px;
       border: 1px solid var(--border);
     }
-
+ 
     /* ─── GRID ─── */
     .grid {
       display: grid;
@@ -79,7 +79,7 @@
       margin: 0 auto;
     }
     @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
-
+ 
     /* ─── CARD ─── */
     .card {
       background: var(--surface);
@@ -95,7 +95,7 @@
       color: var(--muted);
       margin-bottom: 22px;
     }
-
+ 
     /* ─── FORM ─── */
     .field { margin-bottom: 18px; }
     .field label {
@@ -124,7 +124,7 @@
       border-color: var(--green);
     }
     .field input::placeholder { color: var(--muted); }
-
+ 
     /* quota bar */
     .quota-wrap {
       display: flex;
@@ -159,7 +159,7 @@
       color: var(--text);
     }
     .quota-label.full { color: var(--red); font-weight: 700; }
-
+ 
     .btn {
       width: 100%;
       padding: 15px;
@@ -177,7 +177,7 @@
     .btn:hover:not(:disabled) { opacity: .85; }
     .btn:active:not(:disabled) { transform: scale(.98); }
     .btn:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
-
+ 
     /* ─── TOAST ─── */
     #toast {
       position: fixed;
@@ -196,7 +196,7 @@
     #toast.success { background: var(--green);  color: #0d1117; }
     #toast.error   { background: var(--red);    color: #fff; }
     #toast.warning { background: var(--yellow); color: #0d1117; }
-
+ 
     /* ─── TABLE ─── */
     .table-wrap {
       grid-column: 1 / -1;
@@ -219,7 +219,7 @@
       width: 220px;
     }
     #search-input:focus { outline: none; border-color: var(--green); }
-
+ 
     table { width: 100%; border-collapse: collapse; }
     thead tr { border-bottom: 2px solid var(--border); }
     th {
@@ -242,7 +242,7 @@
       font-size: 0.92rem;
     }
     td.mono { font-family: 'Space Mono', monospace; font-size: 0.82rem; color: var(--muted); }
-
+ 
     .badge {
       display: inline-flex; align-items: center; justify-content: center;
       padding: 3px 10px;
@@ -254,7 +254,7 @@
     .badge.low  { background: rgba(57,211,83,.15);  color: var(--green); }
     .badge.mid  { background: rgba(227,179,65,.15); color: var(--yellow); }
     .badge.high { background: rgba(248,81,73,.15);  color: var(--red); }
-
+ 
     #empty-state {
       text-align: center;
       padding: 48px;
@@ -262,7 +262,7 @@
       font-family: 'Space Mono', monospace;
       font-size: 0.85rem;
     }
-
+ 
     /* ─── STATS ─── */
     .stats-row {
       display: grid;
@@ -290,7 +290,51 @@
       letter-spacing: 0.06em;
       margin-top: 5px;
     }
-
+ 
+    /* ─── DELETE BTN ─── */
+    .btn-delete {
+      background: none;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 4px 8px;
+      transition: color .15s, border-color .15s, background .15s;
+      line-height: 1;
+    }
+    .btn-delete:hover {
+      color: var(--red);
+      border-color: var(--red);
+      background: rgba(248,81,73,.1);
+    }
+ 
+    /* ─── MODAL CONFIRMATION ─── */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.7);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      max-width: 380px;
+      width: 90%;
+      text-align: center;
+    }
+    .modal h3 { font-size: 1.1rem; margin-bottom: 10px; }
+    .modal p  { color: var(--muted); font-size: .88rem; margin-bottom: 24px; line-height: 1.6; }
+    .modal-btns { display: flex; gap: 12px; }
+    .modal-btns button { flex: 1; padding: 12px; border-radius: 8px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: .9rem; cursor: pointer; border: none; }
+    .btn-cancel-modal { background: var(--surface2); color: var(--text); border: 1px solid var(--border) !important; }
+    .btn-confirm-delete { background: var(--red); color: #fff; }
+ 
     /* spinner */
     .spinner {
       width: 20px; height: 20px;
@@ -306,7 +350,7 @@
   </style>
 </head>
 <body>
-
+ 
   <header>
     <div class="logo">
       <div class="logo-icon">🌿</div>
@@ -317,13 +361,13 @@
     </div>
     <div id="clock">--:--:--</div>
   </header>
-
+ 
   <div class="grid">
-
+ 
     <!-- FORMULAIRE -->
     <div class="card">
       <h2>Nouvel achat</h2>
-
+ 
       <div class="field">
         <label>Prénom</label>
         <input id="prenom" type="text" placeholder="ex : Jean" autocomplete="off"/>
@@ -340,7 +384,7 @@
         <label>Quantité (max 15 / personne / jour)</label>
         <input id="qte" type="number" min="1" max="15" placeholder="1 – 15"/>
       </div>
-
+ 
       <!-- Quota bar (visible après saisie nom+date) -->
       <div class="quota-wrap" id="quota-wrap" style="display:none">
         <div class="quota-bar-track">
@@ -348,12 +392,12 @@
         </div>
         <span class="quota-label" id="quota-label">0 / 15</span>
       </div>
-
+ 
       <button class="btn" id="submit-btn" onclick="submitAchat()">
         Enregistrer l'achat
       </button>
     </div>
-
+ 
     <!-- STATS DU JOUR -->
     <div class="card">
       <h2>Aujourd'hui</h2>
@@ -373,7 +417,7 @@
       </div>
       <div id="top-list" style="font-size:.85rem; color:var(--muted); font-family:'Space Mono',monospace; line-height:1.9;"></div>
     </div>
-
+ 
     <!-- HISTORIQUE -->
     <div class="card table-wrap">
       <div class="table-header">
@@ -384,11 +428,23 @@
         <div id="empty-state"><span class="spinner"></span> Chargement…</div>
       </div>
     </div>
-
+ 
   </div>
-
+ 
+  <!-- Modal suppression -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+      <h3>🗑️ Supprimer cet achat ?</h3>
+      <p id="modal-desc">Cette action est irréversible.</p>
+      <div class="modal-btns">
+        <button class="btn-cancel-modal" onclick="closeModal()">Annuler</button>
+        <button class="btn-confirm-delete" onclick="confirmDelete()">Supprimer</button>
+      </div>
+    </div>
+  </div>
+ 
   <div id="toast"></div>
-
+ 
   <script>
   // ═══════════════════════════════════════════════
   //  🔧  CONFIGURATION FIREBASE  ← à remplir
@@ -403,13 +459,13 @@
     appId:             "1:547998924847:web:f239708a5c138fe13e06da"
   };
   // ═══════════════════════════════════════════════
-
+ 
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
   const ref = db.ref("achats");
-
+ 
   let allAchats = [];
-
+ 
   // ─── Horloge ───────────────────────────────────
   function updateClock() {
     const now = new Date();
@@ -417,34 +473,34 @@
   }
   setInterval(updateClock, 1000);
   updateClock();
-
+ 
   // ─── Date par défaut ───────────────────────────
   const today = new Date().toISOString().split("T")[0];
   document.getElementById("date").value = today;
-
+ 
   // ─── Quota check en temps réel ─────────────────
   const prenomEl = document.getElementById("prenom");
   const nomEl    = document.getElementById("nom");
   const dateEl   = document.getElementById("date");
   const qteEl    = document.getElementById("qte");
-
+ 
   function updateQuota() {
     const p = prenomEl.value.trim().toLowerCase();
     const n = nomEl.value.trim().toLowerCase();
     const d = dateEl.value;
     if (!p || !n || !d) { document.getElementById("quota-wrap").style.display = "none"; return; }
-
+ 
     const deja = allAchats
       .filter(a => a.prenom.toLowerCase() === p && a.nom.toLowerCase() === n && a.date === d)
       .reduce((s, a) => s + a.qte, 0);
-
+ 
     const reste = 15 - deja;
     const pct   = Math.min((deja / 15) * 100, 100);
-
+ 
     const wrap  = document.getElementById("quota-wrap");
     const bar   = document.getElementById("quota-bar");
     const label = document.getElementById("quota-label");
-
+ 
     wrap.style.display = "flex";
     bar.style.width = pct + "%";
     bar.className = "quota-bar-fill" + (pct >= 100 ? " full" : pct >= 60 ? " warn" : "");
@@ -453,45 +509,45 @@
       ? "⛔ Quota atteint (15/15)"
       : `${deja} / 15 achetés — reste ${reste}`;
     wrap.className = "quota-wrap" + (deja >= 15 ? " over" : "");
-
+ 
     if (qteEl.value) {
       const saisi = parseInt(qteEl.value) || 0;
       document.getElementById("submit-btn").disabled = (deja + saisi > 15) || saisi < 1;
     }
   }
-
+ 
   [prenomEl, nomEl, dateEl, qteEl].forEach(el => el.addEventListener("input", updateQuota));
-
+ 
   // ─── Soumission ────────────────────────────────
   async function submitAchat() {
     const prenom = prenomEl.value.trim();
     const nom    = nomEl.value.trim();
     const date   = dateEl.value;
     const qte    = parseInt(qteEl.value);
-
+ 
     if (!prenom || !nom || !date || !qte) {
       showToast("Tous les champs sont obligatoires", "warning"); return;
     }
     if (qte < 1 || qte > 15) {
       showToast("La quantité doit être entre 1 et 15", "warning"); return;
     }
-
+ 
     // Vérification quota côté client (double sécurité)
     const deja = allAchats
       .filter(a => a.prenom.toLowerCase() === prenom.toLowerCase()
                 && a.nom.toLowerCase()    === nom.toLowerCase()
                 && a.date === date)
       .reduce((s, a) => s + a.qte, 0);
-
+ 
     if (deja + qte > 15) {
       showToast(`⛔ Quota dépassé ! ${prenom} ${nom} a déjà ${deja} fertilisant(s) ce jour.`, "error");
       return;
     }
-
+ 
     const btn = document.getElementById("submit-btn");
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span> Enregistrement…';
-
+ 
     const entry = {
       prenom: capitalize(prenom),
       nom:    capitalize(nom),
@@ -499,7 +555,7 @@
       qte,
       timestamp: Date.now()
     };
-
+ 
     try {
       await ref.push(entry);
       showToast(`✅ ${entry.prenom} ${entry.nom} — ${qte} fertilisant(s) enregistré(s)`, "success");
@@ -512,7 +568,7 @@
       btn.textContent = "Enregistrer l'achat";
     }
   }
-
+ 
   // ─── Lecture temps réel ────────────────────────
   ref.on("value", snap => {
     const raw = snap.val() || {};
@@ -522,7 +578,7 @@
     renderStats();
     updateQuota();
   });
-
+ 
   // ─── Table ─────────────────────────────────────
   function renderTable() {
     const q = document.getElementById("search-input").value.trim().toLowerCase();
@@ -532,42 +588,45 @@
           a.nom.toLowerCase().includes(q) ||
           a.date.includes(q))
       : allAchats;
-
+ 
     const container = document.getElementById("table-container");
-
+ 
     if (filtered.length === 0) {
       container.innerHTML = '<div id="empty-state">Aucune entrée trouvée.</div>';
       return;
     }
-
+ 
     const rows = filtered.map(a => {
       const cls = a.qte <= 5 ? "low" : a.qte <= 10 ? "mid" : "high";
-      const t = new Date(a.timestamp).toLocaleTimeString("fr-FR", { hour:"2-digit", minute:"2-digit" });
+      const dt  = new Date(a.timestamp);
+      const dateAff = formatDate(a.date);
+      const heure = dt.toLocaleTimeString("fr-FR", { hour:"2-digit", minute:"2-digit", second:"2-digit" });
       return `<tr>
         <td>${a.prenom}</td>
         <td>${a.nom}</td>
-        <td class="mono">${formatDate(a.date)}</td>
-        <td class="mono">${t}</td>
+        <td class="mono">${dateAff}</td>
+        <td class="mono" style="color:var(--text)">${heure}</td>
         <td><span class="badge ${cls}">${a.qte}</span></td>
+        <td><button class="btn-delete" onclick="askDelete('${a.id}','${a.prenom} ${a.nom}','${dateAff}',${a.qte})" title="Supprimer">🗑</button></td>
       </tr>`;
     }).join("");
-
+ 
     container.innerHTML = `
       <table>
         <thead><tr>
-          <th>Prénom</th><th>Nom</th><th>Date</th><th>Heure</th><th>Qté</th>
+          <th>Prénom</th><th>Nom</th><th>Date</th><th>Heure</th><th>Qté</th><th></th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>`;
   }
-
+ 
   // ─── Stats du jour ─────────────────────────────
   function renderStats() {
     const todayStr = new Date().toISOString().split("T")[0];
     const todayAchats = allAchats.filter(a => a.date === todayStr);
-
+ 
     const total = todayAchats.reduce((s, a) => s + a.qte, 0);
-
+ 
     const parPersonne = {};
     todayAchats.forEach(a => {
       const k = (a.prenom + " " + a.nom).toLowerCase();
@@ -575,11 +634,11 @@
     });
     const personnes = Object.keys(parPersonne).length;
     const max = personnes ? Math.max(...Object.values(parPersonne)) : 0;
-
+ 
     document.getElementById("stat-total").textContent    = total;
     document.getElementById("stat-personnes").textContent = personnes;
     document.getElementById("stat-max").textContent      = max;
-
+ 
     // Top liste
     const sorted = Object.entries(parPersonne).sort((a,b) => b[1]-a[1]).slice(0, 5);
     document.getElementById("top-list").innerHTML = sorted
@@ -589,7 +648,7 @@
         return `<span style="color:${color}">${bar}</span> ${capitalize(nom)} — ${n}/15`;
       }).join("<br/>");
   }
-
+ 
   // ─── Helpers ───────────────────────────────────
   function capitalize(s) {
     return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
@@ -599,7 +658,7 @@
     const [y,m,j] = d.split("-");
     return `${j}/${m}/${y}`;
   }
-
+ 
   let toastTimer;
   function showToast(msg, type = "success") {
     const t = document.getElementById("toast");
@@ -608,6 +667,37 @@
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => { t.className = ""; }, 3500);
   }
-  </script>
+ 
+  // ─── Suppression ───────────────────────────────
+  let pendingDeleteId = null;
+ 
+  function askDelete(id, nom, date, qte) {
+    pendingDeleteId = id;
+    document.getElementById("modal-desc").innerHTML =
+      `<strong>${nom}</strong><br>${date} — <strong>${qte} fertilisant(s)</strong><br><br>Cette action est irréversible.`;
+    document.getElementById("modal-overlay").classList.add("open");
+  }
+ 
+  function closeModal() {
+    pendingDeleteId = null;
+    document.getElementById("modal-overlay").classList.remove("open");
+  }
+ 
+  async function confirmDelete() {
+    if (!pendingDeleteId) return;
+    try {
+      await db.ref("achats/" + pendingDeleteId).remove();
+      showToast("✅ Entrée supprimée", "success");
+    } catch(e) {
+      showToast("Erreur : " + e.message, "error");
+    }
+    closeModal();
+  }
+ 
+  // Fermer modal en cliquant outside
+  document.getElementById("modal-overlay").addEventListener("click", function(e) {
+    if (e.target === this) closeModal();
+  });</script>
 </body>
 </html>
+ 
