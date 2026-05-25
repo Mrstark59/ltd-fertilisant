@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LTD Grove Street – Registre Fertilisants</title>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet"/>
+
+  <style>
+    :root {
+      --bg:       #0d1117;
+      --surface:  #161b22;
+      --surface2: #1c2330;
+      --border:   #2d3748;
+      --green:    #39d353;
+      --green2:   #26a641;
+      --red:      #f85149;
+      --yellow:   #e3b341;
+      --text:     #e6edf3;
+      --muted:    #7d8590;
+      --radius:   12px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      min-height: 100vh;
+      padding: 24px 16px 60px;
+    }
+
+    /* ─── HEADER ─── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo-icon {
+      width: 46px; height: 46px;
+      background: var(--green);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+    }
+    .logo-text h1 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px; }
+    .logo-text p  { font-size: 0.75rem; color: var(--muted); font-family: 'Space Mono', monospace; }
+
+    #clock {
+      font-family: 'Space Mono', monospace;
+      font-size: 1rem;
+      color: var(--green);
+      background: var(--surface);
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    /* ─── GRID ─── */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+
+    /* ─── CARD ─── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+    }
+    .card h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 22px;
+    }
+
+    /* ─── FORM ─── */
+    .field { margin-bottom: 18px; }
+    .field label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 7px;
+    }
+    .field input, .field select {
+      width: 100%;
+      padding: 13px 16px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      transition: border-color .2s;
+      -webkit-appearance: none;
+    }
+    .field input:focus, .field select:focus {
+      outline: none;
+      border-color: var(--green);
+    }
+    .field input::placeholder { color: var(--muted); }
+
+    /* quota bar */
+    .quota-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+      padding: 12px 16px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .quota-wrap.over { border-color: var(--red); }
+    .quota-bar-track {
+      flex: 1;
+      height: 8px;
+      background: var(--border);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+    .quota-bar-fill {
+      height: 100%;
+      border-radius: 100px;
+      background: var(--green);
+      transition: width .4s;
+    }
+    .quota-bar-fill.warn  { background: var(--yellow); }
+    .quota-bar-fill.full  { background: var(--red); }
+    .quota-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.8rem;
+      white-space: nowrap;
+      color: var(--text);
+    }
+    .quota-label.full { color: var(--red); font-weight: 700; }
+
+    .btn {
+      width: 100%;
+      padding: 15px;
+      background: var(--green);
+      color: #0d1117;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: opacity .2s, transform .1s;
+    }
+    .btn:hover:not(:disabled) { opacity: .85; }
+    .btn:active:not(:disabled) { transform: scale(.98); }
+    .btn:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
+
+    /* ─── TOAST ─── */
+    #toast {
+      position: fixed;
+      bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      padding: 14px 28px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: .95rem;
+      pointer-events: none;
+      transition: transform .3s cubic-bezier(.34,1.56,.64,1), opacity .3s;
+      opacity: 0;
+      z-index: 99;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    #toast.success { background: var(--green);  color: #0d1117; }
+    #toast.error   { background: var(--red);    color: #fff; }
+    #toast.warning { background: var(--yellow); color: #0d1117; }
+
+    /* ─── TABLE ─── */
+    .table-wrap {
+      grid-column: 1 / -1;
+    }
+    .table-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .table-header h2 { margin: 0; }
+    #search-input {
+      padding: 9px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.82rem;
+      width: 220px;
+    }
+    #search-input:focus { outline: none; border-color: var(--green); }
+
+    table { width: 100%; border-collapse: collapse; }
+    thead tr { border-bottom: 2px solid var(--border); }
+    th {
+      text-align: left;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 0 12px 12px;
+    }
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background .15s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--surface2); }
+    td {
+      padding: 13px 12px;
+      font-size: 0.92rem;
+    }
+    td.mono { font-family: 'Space Mono', monospace; font-size: 0.82rem; color: var(--muted); }
+
+    .badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 3px 10px;
+      border-radius: 100px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      font-family: 'Space Mono', monospace;
+    }
+    .badge.low  { background: rgba(57,211,83,.15);  color: var(--green); }
+    .badge.mid  { background: rgba(227,179,65,.15); color: var(--yellow); }
+    .badge.high { background: rgba(248,81,73,.15);  color: var(--red); }
+
+    #empty-state {
+      text-align: center;
+      padding: 48px;
+      color: var(--muted);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.85rem;
+    }
+
+    /* ─── STATS ─── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .stat {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--green);
+      line-height: 1;
+    }
+    .stat-label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-top: 5px;
+    }
+
+    /* spinner */
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--green);
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🌿</div>
+      <div class="logo-text">
+        <h1>LTD Grove Street</h1>
+        <p>Registre des fertilisants</p>
+      </div>
+    </div>
+    <div id="clock">--:--:--</div>
+  </header>
+
+  <div class="grid">
+
+    <!-- FORMULAIRE -->
+    <div class="card">
+      <h2>Nouvel achat</h2>
+
+      <div class="field">
+        <label>Prénom</label>
+        <input id="prenom" type="text" placeholder="ex : Jean" autocomplete="off"/>
+      </div>
+      <div class="field">
+        <label>Nom</label>
+        <input id="nom" type="text" placeholder="ex : Dupont" autocomplete="off"/>
+      </div>
+      <div class="field">
+        <label>Date</label>
+        <input id="date" type="date"/>
+      </div>
+      <div class="field">
+        <label>Quantité (max 15 / personne / jour)</label>
+        <input id="qte" type="number" min="1" max="15" placeholder="1 – 15"/>
+      </div>
+
+      <!-- Quota bar (visible après saisie nom+date) -->
+      <div class="quota-wrap" id="quota-wrap" style="display:none">
+        <div class="quota-bar-track">
+          <div class="quota-bar-fill" id="quota-bar" style="width:0%"></div>
+        </div>
+        <span class="quota-label" id="quota-label">0 / 15</span>
+      </div>
+
+      <button class="btn" id="submit-btn" onclick="submitAchat()">
+        Enregistrer l'achat
+      </button>
+    </div>
+
+    <!-- STATS DU JOUR -->
+    <div class="card">
+      <h2>Aujourd'hui</h2>
+      <div class="stats-row">
+        <div class="stat">
+          <div class="stat-value" id="stat-total">–</div>
+          <div class="stat-label">Fertilisants vendus</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="stat-personnes">–</div>
+          <div class="stat-label">Acheteurs uniques</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="stat-max">–</div>
+          <div class="stat-label">Max par acheteur</div>
+        </div>
+      </div>
+      <div id="top-list" style="font-size:.85rem; color:var(--muted); font-family:'Space Mono',monospace; line-height:1.9;"></div>
+    </div>
+
+    <!-- HISTORIQUE -->
+    <div class="card table-wrap">
+      <div class="table-header">
+        <h2>Historique</h2>
+        <input id="search-input" type="text" placeholder="Rechercher…" oninput="renderTable()"/>
+      </div>
+      <div id="table-container">
+        <div id="empty-state"><span class="spinner"></span> Chargement…</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+  // ═══════════════════════════════════════════════
+  //  🔧  CONFIGURATION FIREBASE  ← à remplir
+  // ═══════════════════════════════════════════════
+  const firebaseConfig = {
+    apiKey:            "AIzaSyBLlfJmzviSHoQDik6tNuf5lNCNbfisrdM",
+    authDomain:        "ltd-fertilisant.firebaseapp.com",
+    databaseURL:       "https://ltd-fertilisant-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId:         "ltd-fertilisant",
+    storageBucket:     "ltd-fertilisant.firebasestorage.app",
+    messagingSenderId: "547998924847",
+    appId:             "1:547998924847:web:f239708a5c138fe13e06da"
+  };
+  // ═══════════════════════════════════════════════
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const ref = db.ref("achats");
+
+  let allAchats = [];
+
+  // ─── Horloge ───────────────────────────────────
+  function updateClock() {
+    const now = new Date();
+    document.getElementById("clock").textContent = now.toLocaleTimeString("fr-FR");
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  // ─── Date par défaut ───────────────────────────
+  const today = new Date().toISOString().split("T")[0];
+  document.getElementById("date").value = today;
+
+  // ─── Quota check en temps réel ─────────────────
+  const prenomEl = document.getElementById("prenom");
+  const nomEl    = document.getElementById("nom");
+  const dateEl   = document.getElementById("date");
+  const qteEl    = document.getElementById("qte");
+
+  function updateQuota() {
+    const p = prenomEl.value.trim().toLowerCase();
+    const n = nomEl.value.trim().toLowerCase();
+    const d = dateEl.value;
+    if (!p || !n || !d) { document.getElementById("quota-wrap").style.display = "none"; return; }
+
+    const deja = allAchats
+      .filter(a => a.prenom.toLowerCase() === p && a.nom.toLowerCase() === n && a.date === d)
+      .reduce((s, a) => s + a.qte, 0);
+
+    const reste = 15 - deja;
+    const pct   = Math.min((deja / 15) * 100, 100);
+
+    const wrap  = document.getElementById("quota-wrap");
+    const bar   = document.getElementById("quota-bar");
+    const label = document.getElementById("quota-label");
+
+    wrap.style.display = "flex";
+    bar.style.width = pct + "%";
+    bar.className = "quota-bar-fill" + (pct >= 100 ? " full" : pct >= 60 ? " warn" : "");
+    label.className = "quota-label" + (deja >= 15 ? " full" : "");
+    label.textContent = deja >= 15
+      ? "⛔ Quota atteint (15/15)"
+      : `${deja} / 15 achetés — reste ${reste}`;
+    wrap.className = "quota-wrap" + (deja >= 15 ? " over" : "");
+
+    if (qteEl.value) {
+      const saisi = parseInt(qteEl.value) || 0;
+      document.getElementById("submit-btn").disabled = (deja + saisi > 15) || saisi < 1;
+    }
+  }
+
+  [prenomEl, nomEl, dateEl, qteEl].forEach(el => el.addEventListener("input", updateQuota));
+
+  // ─── Soumission ────────────────────────────────
+  async function submitAchat() {
+    const prenom = prenomEl.value.trim();
+    const nom    = nomEl.value.trim();
+    const date   = dateEl.value;
+    const qte    = parseInt(qteEl.value);
+
+    if (!prenom || !nom || !date || !qte) {
+      showToast("Tous les champs sont obligatoires", "warning"); return;
+    }
+    if (qte < 1 || qte > 15) {
+      showToast("La quantité doit être entre 1 et 15", "warning"); return;
+    }
+
+    // Vérification quota côté client (double sécurité)
+    const deja = allAchats
+      .filter(a => a.prenom.toLowerCase() === prenom.toLowerCase()
+                && a.nom.toLowerCase()    === nom.toLowerCase()
+                && a.date === date)
+      .reduce((s, a) => s + a.qte, 0);
+
+    if (deja + qte > 15) {
+      showToast(`⛔ Quota dépassé ! ${prenom} ${nom} a déjà ${deja} fertilisant(s) ce jour.`, "error");
+      return;
+    }
+
+    const btn = document.getElementById("submit-btn");
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Enregistrement…';
+
+    const entry = {
+      prenom: capitalize(prenom),
+      nom:    capitalize(nom),
+      date,
+      qte,
+      timestamp: Date.now()
+    };
+
+    try {
+      await ref.push(entry);
+      showToast(`✅ ${entry.prenom} ${entry.nom} — ${qte} fertilisant(s) enregistré(s)`, "success");
+      qteEl.value = "";
+      updateQuota();
+    } catch (e) {
+      showToast("Erreur Firebase : " + e.message, "error");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Enregistrer l'achat";
+    }
+  }
+
+  // ─── Lecture temps réel ────────────────────────
+  ref.on("value", snap => {
+    const raw = snap.val() || {};
+    allAchats = Object.entries(raw).map(([id, v]) => ({ id, ...v }));
+    allAchats.sort((a, b) => b.timestamp - a.timestamp);
+    renderTable();
+    renderStats();
+    updateQuota();
+  });
+
+  // ─── Table ─────────────────────────────────────
+  function renderTable() {
+    const q = document.getElementById("search-input").value.trim().toLowerCase();
+    const filtered = q
+      ? allAchats.filter(a =>
+          a.prenom.toLowerCase().includes(q) ||
+          a.nom.toLowerCase().includes(q) ||
+          a.date.includes(q))
+      : allAchats;
+
+    const container = document.getElementById("table-container");
+
+    if (filtered.length === 0) {
+      container.innerHTML = '<div id="empty-state">Aucune entrée trouvée.</div>';
+      return;
+    }
+
+    const rows = filtered.map(a => {
+      const cls = a.qte <= 5 ? "low" : a.qte <= 10 ? "mid" : "high";
+      const t = new Date(a.timestamp).toLocaleTimeString("fr-FR", { hour:"2-digit", minute:"2-digit" });
+      return `<tr>
+        <td>${a.prenom}</td>
+        <td>${a.nom}</td>
+        <td class="mono">${formatDate(a.date)}</td>
+        <td class="mono">${t}</td>
+        <td><span class="badge ${cls}">${a.qte}</span></td>
+      </tr>`;
+    }).join("");
+
+    container.innerHTML = `
+      <table>
+        <thead><tr>
+          <th>Prénom</th><th>Nom</th><th>Date</th><th>Heure</th><th>Qté</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  // ─── Stats du jour ─────────────────────────────
+  function renderStats() {
+    const todayStr = new Date().toISOString().split("T")[0];
+    const todayAchats = allAchats.filter(a => a.date === todayStr);
+
+    const total = todayAchats.reduce((s, a) => s + a.qte, 0);
+
+    const parPersonne = {};
+    todayAchats.forEach(a => {
+      const k = (a.prenom + " " + a.nom).toLowerCase();
+      parPersonne[k] = (parPersonne[k] || 0) + a.qte;
+    });
+    const personnes = Object.keys(parPersonne).length;
+    const max = personnes ? Math.max(...Object.values(parPersonne)) : 0;
+
+    document.getElementById("stat-total").textContent    = total;
+    document.getElementById("stat-personnes").textContent = personnes;
+    document.getElementById("stat-max").textContent      = max;
+
+    // Top liste
+    const sorted = Object.entries(parPersonne).sort((a,b) => b[1]-a[1]).slice(0, 5);
+    document.getElementById("top-list").innerHTML = sorted
+      .map(([nom, n]) => {
+        const bar = "█".repeat(Math.round(n/15*10)) + "░".repeat(10-Math.round(n/15*10));
+        const color = n >= 15 ? "var(--red)" : n >= 10 ? "var(--yellow)" : "var(--green)";
+        return `<span style="color:${color}">${bar}</span> ${capitalize(nom)} — ${n}/15`;
+      }).join("<br/>");
+  }
+
+  // ─── Helpers ───────────────────────────────────
+  function capitalize(s) {
+    return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+  }
+  function formatDate(d) {
+    if (!d) return "";
+    const [y,m,j] = d.split("-");
+    return `${j}/${m}/${y}`;
+  }
+
+  let toastTimer;
+  function showToast(msg, type = "success") {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.className = `show ${type}`;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.className = ""; }, 3500);
+  }
+  </script>
+</body>
+</html>
