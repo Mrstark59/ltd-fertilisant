@@ -483,7 +483,7 @@
         <div class="card-body">
           <div class="field"><label>Prénom acheteur</label><input id="prenom" type="text" placeholder="Jean" autocomplete="off"/></div>
           <div class="field"><label>Nom acheteur</label><input id="nom" type="text" placeholder="Dupont" autocomplete="off"/></div>
-          <div class="field"><label>Quantité (max 15 / jour)</label><input id="qte" type="number" min="1" max="15" placeholder="1 – 15"/></div>
+          <div class="field"><label>Quantité (max 15 / 10 min)</label><input id="qte" type="number" min="1" max="15" placeholder="1 – 15"/></div>
 
           <div class="quota-wrap" id="quota-wrap">
             <div class="quota-top">
@@ -582,8 +582,8 @@
   const $vn = document.getElementById("v-nom");
 
   function getUsed(p, n) {
-    const d = todayStr();
-    return all.filter(a => a.prenom.toLowerCase()===p && a.nom.toLowerCase()===n && a.date===d).reduce((s,a)=>s+a.qte,0);
+    const since = Date.now() - 10 * 60 * 1000; // 10 minutes glissantes
+    return all.filter(a => a.prenom.toLowerCase()===p && a.nom.toLowerCase()===n && a.timestamp >= since).reduce((s,a)=>s+a.qte,0);
   }
 
   function updateQuota() {
@@ -604,7 +604,7 @@
     fill.className = "quota-fill" + (pct>=100?" over":pct>=60?" warn":"");
     lbl.className  = "quota-label" + (u>=15?" over":"");
     num.className  = "quota-num"   + (u>=15?" over":"");
-    lbl.textContent = u>=15 ? "⛔ Quota atteint — 15/15" : `${u} / 15 utilisés aujourd'hui — reste ${15-u}`;
+    lbl.textContent = u>=15 ? "⛔ Quota atteint — 15/15" : `${u} / 15 sur les 10 dernières minutes — reste ${15-u}`;
     num.textContent = Math.round(pct) + "%";
 
     const qv = parseInt($q.value)||0;
