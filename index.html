@@ -613,6 +613,9 @@
 
   [$p,$n,$q].forEach(el=>el.addEventListener("input",updateQuota));
 
+  // Rafraîchit le quota automatiquement (la fenêtre de 10 min s'écoule sans action)
+  setInterval(updateQuota, 15000);
+
   async function submitAchat() {
     const prenom=($p.value||"").trim(), nom=($n.value||"").trim();
     const qte=parseInt($q.value), vprenom=($vp.value||"").trim(), vnom=($vn.value||"").trim();
